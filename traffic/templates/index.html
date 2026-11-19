@@ -1,11 +1,20 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <title>LinkTraffic</title>
-</head>
-<body>
-    <h1>LinkTrafficへようこそ！</h1>
-    <p>交通系ICカード & サブスク課金システムが起動しました。</p>
-</body>
-</html>
+{% extends "not_logged_base.html" %}
+{% load static %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block title %}HOME{% endblock %}
+
+{% block contents %}
+<div class="main_contents">
+    {% if user.is_authenticated %}
+        <h2>KEPEMASシステムへようこそ</h2>
+    {% else %}
+        <h2>LinkTrafficシステムへようこそ</h2>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}
