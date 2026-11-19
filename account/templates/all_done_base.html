@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}アカウント登録完了{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/account.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="account-card">
+    <h1 class="account-card__title">アカウント登録完了</h1>
+
+    <div class="account-message-area">
+        <p>アカウント登録完了しました。</p>
+        <p>下のボタンから機能にアクセスすることが出来ます</p>
+    </div>
+
+    <div class="account-actions">
+        <a href="{% url 'home' %}" class="btn-pill btn-pill--primary">ホームへ</a>
+    </div>
+</div>
+{% endblock %}

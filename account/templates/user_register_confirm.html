@@ -1,0 +1,74 @@
+{% extends 'not_logged_base.html' %}
+{% load static %}
+
+{% block title %}アカウント登録確認{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0">
+<link rel="stylesheet" href="{% static 'accounts/css/user.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="account-card">
+    <h1 class="account-card__title">アカウント登録確認</h1>
+
+    <div class="account-grid">
+        <div class="form-group">
+            <span class="form-label">メールアドレス</span>
+            <div class="confirm-value">{{ data.email }}</div>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">会社名</span>
+            <div class="confirm-value">{{ data.company_name }}</div>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">パスワード</span>
+            <div class="confirm-value">*********</div>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">業種</span>
+            <div class="confirm-value">{{ data.industry_label }}</div>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">電話番号</span>
+            <div class="confirm-value">{{ data.phone_number }}</div>
+        </div>
+
+        <div class="form-group form-group--full">
+            <span class="form-label">〒 郵便番号</span>
+            <div class="confirm-value">{{ data.post_code }}</div>
+        </div>
+
+        <div class="form-group form-group--full">
+            <span class="form-label">住所</span>
+            <div class="confirm-value">{{ data.address }}</div>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'accounts:user_register_done' %}">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ data.email }}">
+        <input type="hidden" name="company_name" value="{{ data.company_name }}">
+        <input type="hidden" name="password" value="{{ data.password }}">
+        <input type="hidden" name="industry" value="{{ data.industry }}">
+        <input type="hidden" name="phone_number" value="{{ data.phone_number }}">
+        <input type="hidden" name="post_code" value="{{ data.post_code }}">
+        <input type="hidden" name="address" value="{{ data.address }}">
+
+        <div class="account-actions">
+            <button type="submit" formaction="{% url 'accounts:user_register' %}" name="action" value="back" class="pill-shape btn-action btn-action--secondary">
+                <span class="material-symbols-outlined btn-icon" aria-hidden="true">edit</span>
+                修正する
+            </button>
+            <button type="submit" name="action" value="register" class="pill-shape btn-action btn-action--primary">
+                <span class="material-symbols-outlined btn-icon" aria-hidden="true">person_add</span>
+                登録する
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

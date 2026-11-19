@@ -1,0 +1,97 @@
+{% extends 'logged_base.html' %}
+{% load static %}
+
+{% block title %}アカウント変更{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0">
+<link rel="stylesheet" href="{% static 'accounts/css/user.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="account-card">
+    <h1 class="account-card__title">アカウント変更</h1>
+
+    <form method="post" action="{% url 'accounts:user_update_confirm' %}">
+        {% csrf_token %}
+
+        <div class="account-grid">
+            <div class="form-group">
+                <label class="form-label" for="id_email">メールアドレス</label>
+                <input type="email" id="id_email" name="email" class="pill-shape form-control"
+                       value="{{ form.email.value|default:user.email }}" placeholder="aaabbb@gmail.com" required>
+                {% if form.email.errors %}<p class="field-error">{{ form.email.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_company_name">会社名</label>
+                <input type="text" id="id_company_name" name="company_name" class="pill-shape form-control"
+                       value="{{ form.company_name.value|default:user.company_name }}" placeholder="〇〇〇株式会社" required>
+                {% if form.company_name.errors %}<p class="field-error">{{ form.company_name.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_password">パスワード</label>
+                <input type="password" id="id_password" name="password" class="pill-shape form-control"
+                       placeholder="変更する場合のみ入力">
+                {% if form.password.errors %}<p class="field-error">{{ form.password.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_industry">業種</label>
+                <select id="id_industry" name="industry" class="pill-shape form-control form-control--select" required>
+                    {% for value, label in industry_choices %}
+                        <option value="{{ value }}"
+                            {% if form.industry.value|default:user.industry|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+                {% if form.industry.errors %}<p class="field-error">{{ form.industry.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_phone_number">電話番号</label>
+                <input type="tel" id="id_phone_number" name="phone_number" class="pill-shape form-control"
+                       value="{{ form.phone_number.value|default:user.phone_number }}" placeholder="0971234567" required>
+                {% if form.phone_number.errors %}<p class="field-error">{{ form.phone_number.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="form-group form-group--full">
+                <label class="form-label" for="id_post_code">〒 郵便番号</label>
+                <div class="postal-row">
+                    <input type="text" id="id_post_code" name="post_code" class="pill-shape form-control form-control--postal"
+                           value="{{ form.post_code.value|default:user.post_code|default:'' }}" placeholder="8700839" maxlength="7">
+                    <button type="button" id="btn-search-address" class="pill-shape btn-action btn-action--primary">
+                        <span class="material-symbols-outlined btn-icon" aria-hidden="true">search</span>
+                        住所検索
+                    </button>
+                </div>
+                {% if form.post_code.errors %}<p class="field-error">{{ form.post_code.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="form-group form-group--full">
+                <label class="form-label" for="id_address">住所</label>
+                <input type="text" id="id_address" name="address" class="pill-shape form-control form-control--address"
+                       value="{{ form.address.value|default:user.address|default:'' }}" placeholder="大分県大分市金池南">
+                {% if form.address.errors %}<p class="field-error">{{ form.address.errors.0 }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div class="account-actions">
+            <a href="{% url 'accounts:mypage' %}" class="pill-shape btn-action btn-action--secondary">
+                <span class="material-symbols-outlined btn-icon" aria-hidden="true">close</span>
+                キャンセル
+            </a>
+            <button type="submit" class="pill-shape btn-action btn-action--primary">
+                <span class="material-symbols-outlined btn-icon" aria-hidden="true">arrow_forward</span>
+                確認画面へ
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'accounts/js/user_postal.js' %}" defer></script>
+{% endblock %}

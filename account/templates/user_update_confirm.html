@@ -1,0 +1,74 @@
+{% extends 'logged_base.html' %}
+{% load static %}
+
+{% block title %}アカウント変更確認{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0">
+<link rel="stylesheet" href="{% static 'accounts/css/user.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="account-card">
+    <h1 class="account-card__title">アカウント変更確認</h1>
+
+    <div class="account-grid">
+        <div class="form-group">
+            <span class="form-label">メールアドレス</span>
+            <div class="confirm-value {% if changed.email %}is-changed{% endif %}">{{ data.email }}</div>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">会社名</span>
+            <div class="confirm-value {% if changed.company_name %}is-changed{% endif %}">{{ data.company_name }}</div>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">パスワード</span>
+            <div class="confirm-value {% if changed.password %}is-changed{% endif %}">*********</div>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">業種</span>
+            <div class="confirm-value {% if changed.industry %}is-changed{% endif %}">{{ data.industry_label }}</div>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">電話番号</span>
+            <div class="confirm-value {% if changed.phone_number %}is-changed{% endif %}">{{ data.phone_number }}</div>
+        </div>
+
+        <div class="form-group form-group--full">
+            <span class="form-label">〒 郵便番号</span>
+            <div class="confirm-value {% if changed.post_code %}is-changed{% endif %}">{{ data.post_code }}</div>
+        </div>
+
+        <div class="form-group form-group--full">
+            <span class="form-label">住所</span>
+            <div class="confirm-value {% if changed.address %}is-changed{% endif %}">{{ data.address }}</div>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'accounts:user_update_done' %}">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ data.email }}">
+        <input type="hidden" name="company_name" value="{{ data.company_name }}">
+        <input type="hidden" name="password" value="{{ data.password }}">
+        <input type="hidden" name="industry" value="{{ data.industry }}">
+        <input type="hidden" name="phone_number" value="{{ data.phone_number }}">
+        <input type="hidden" name="post_code" value="{{ data.post_code }}">
+        <input type="hidden" name="address" value="{{ data.address }}">
+
+        <div class="account-actions">
+            <button type="submit" formaction="{% url 'accounts:user_update' %}" name="action" value="back" class="pill-shape btn-action btn-action--secondary">
+                <span class="material-symbols-outlined btn-icon" aria-hidden="true">edit</span>
+                修正する
+            </button>
+            <button type="submit" name="action" value="update" class="pill-shape btn-action btn-action--primary">
+                <span class="material-symbols-outlined btn-icon" aria-hidden="true">check</span>
+                確定する
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

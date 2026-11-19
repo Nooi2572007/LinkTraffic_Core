@@ -1,0 +1,35 @@
+{% extends 'logged_base.html' %}
+{% load static %}
+
+{% block title %}アカウント削除{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0">
+<link rel="stylesheet" href="{% static 'accounts/css/user.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="account-card">
+    <h1 class="account-card__title">アカウント削除</h1>
+
+    <div class="account-message-area">
+        <p>アカウント削除を行います。</p>
+        <p>月額会員から退会し全ての機能にアクセス出来なくなります</p>
+        <p>本当によろしいでしょうか？</p>
+    </div>
+
+    <form method="post" action="{% url 'accounts:user_archive_done' %}">
+        {% csrf_token %}
+        <div class="account-actions">
+            <button type="submit" class="pill-shape btn-action btn-action--danger">
+                <span class="material-symbols-outlined btn-icon" aria-hidden="true">delete</span>
+                削除する
+            </button>
+            <a href="{% url 'accounts:mypage' %}" class="pill-shape btn-action btn-action--secondary">
+                <span class="material-symbols-outlined btn-icon" aria-hidden="true">close</span>
+                キャンセル
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}  

@@ -1,0 +1,214 @@
+:root {
+    /* カラー定義（色コードはここだけに集約） */
+    --color-bg-card: #d9d9d9;
+    --color-bg-white: #ffffff;
+    --color-bg-secondary: #efefef;
+    --color-text-main: #1a1a1a;
+    --color-text-placeholder: #a6a6a6;
+    --color-text-white: #ffffff;
+    --color-text-changed: #2e9e3b;
+    --color-text-error: #d90000;
+    --color-border-default: #333333;
+    --color-accent-primary: #3ec1e8;
+    --color-danger: #f00000;
+
+    /* フォントサイズ共通定義 */
+    --font-size-title: 1.5rem;
+    --font-size-message: 1.25rem;
+    --font-size-base: 1rem;
+    --font-size-control: 0.95rem;
+    --font-size-error: 0.85rem;
+
+    /* 共通寸法 */
+    --radius-card: 32px;
+    --radius-pill: 9999px;
+}
+
+/* 全体カードコンテナ */
+.account-card {
+    background-color: var(--color-bg-card);
+    border-radius: var(--radius-card);
+    padding: 32px 44px 36px;
+    max-width: 860px;
+    margin: 32px auto;
+    color: var(--color-text-main);
+    box-sizing: border-box;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.account-card__title {
+    font-size: var(--font-size-title);
+    font-weight: 400;
+    margin: 0 0 24px;
+}
+
+/* 2カラムレイアウト */
+.account-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 36px;
+    row-gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group--full {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-size: var(--font-size-base);
+    margin-bottom: 6px;
+}
+
+/* 共通ピル型（入力欄・ボタン共通の角丸とフォント設定） */
+.pill-shape {
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-control);
+    box-sizing: border-box;
+}
+
+/* 入力フォーム共通 */
+.form-control {
+    width: 100%;
+    height: 40px;
+    padding: 0 18px;
+    border: 1px solid var(--color-border-default);
+    background-color: var(--color-bg-white);
+    color: var(--color-text-main);
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: var(--color-text-placeholder);
+}
+
+.form-control:focus {
+    border-color: var(--color-accent-primary);
+}
+
+.form-control--select {
+    width: 55%;
+    min-width: 190px;
+    cursor: pointer;
+}
+
+.postal-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.form-control--postal {
+    width: 140px;
+}
+
+.form-control--address {
+    width: 72%;
+    min-width: 300px;
+}
+
+/* 確認画面テキスト */
+.confirm-value {
+    font-size: var(--font-size-base);
+    padding-left: 12px;
+    min-height: 24px;
+}
+
+.confirm-value.is-changed {
+    color: var(--color-text-changed);
+    font-weight: 500;
+}
+
+/* 完了・削除確認画面メッセージ */
+.account-message-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: var(--font-size-message);
+    line-height: 1.8;
+    padding: 40px 16px;
+}
+
+.account-message-area p {
+    margin: 0;
+}
+
+/* ボタンエリア・共通ボタンスタイル */
+.account-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 20px;
+    margin-top: 28px;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 145px;
+    height: 42px;
+    padding: 0 22px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.btn-action:hover {
+    opacity: 0.85;
+}
+
+/* ボタンバリエーション（色差分のみ定義） */
+.btn-action--primary {
+    background-color: var(--color-bg-white);
+    border: 1.5px solid var(--color-accent-primary);
+    color: var(--color-text-main);
+}
+
+.btn-action--secondary {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-default);
+    color: var(--color-text-main);
+}
+
+.btn-action--danger {
+    background-color: var(--color-danger);
+    border: none;
+    color: var(--color-text-white);
+}
+
+/* Google Fonts Icon 整列用 */
+.btn-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.field-error {
+    color: var(--color-text-error);
+    font-size: var(--font-size-error);
+    margin: 4px 0 0 12px;
+}
+
+@media (max-width: 680px) {
+    .account-card {
+        padding: 24px 20px;
+    }
+    .account-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-control--address,
+    .form-control--select {
+        width: 100%;
+    }
+}
