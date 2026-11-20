@@ -39,6 +39,8 @@ class PasswordMixin(models.Model):
         abstract = True
 
     def set_password(self, raw_password):
+        if not raw_password:
+            raise ValueError('パスワードは空にできません。')
         self.password = make_password(raw_password)
 
     def check_password(self, raw_password):
