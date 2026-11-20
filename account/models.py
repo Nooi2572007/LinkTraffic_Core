@@ -5,7 +5,7 @@ import uuid
 
 admin_id_validator = RegexValidator(
     regex=r'^@LTA[0-9]{5}$',
-    message='管理者IDは「@LTA」+半角数字5桁で入力してください（全角数字は不可）。',
+    message='管理者IDは「@LTA」+半角数字5桁で入力してください（全角数字は不可）',
 )
 
 
