@@ -109,7 +109,6 @@ class AccountFormMixin(AccountBaseMixin):
             'address': address,
             'company_name': company_name,
             'industry': industry,
-            # テンプレート互換用エイリアス
             'phone': phone,
             'tel': phone,
             'zipcode': post_code,
@@ -120,7 +119,6 @@ class AccountFormMixin(AccountBaseMixin):
     def validate_account_data(self, data, is_update=False, exclude_user_id=None):
         errors = []
 
-        # 1. メールアドレス
         if not data['email']:
             errors.append('メールアドレスが入力されていません。')
         elif len(data['email']) > 255:
@@ -136,7 +134,6 @@ class AccountFormMixin(AccountBaseMixin):
             except ValidationError:
                 errors.append('メールアドレスの形式が正しくありません。')
 
-        # 2. パスワード
         pwd = data['password']
         if not is_update and not pwd:
             errors.append('パスワードが入力されていません。')
@@ -146,23 +143,19 @@ class AccountFormMixin(AccountBaseMixin):
             elif not re.search(r'[A-Za-z]', pwd) or not re.search(r'\d', pwd):
                 errors.append('パスワードは英字と数字の両方を含めてください。')
 
-        # 3. 電話番号
         if not data['phone_number']:
             errors.append('電話番号が入力されていません。')
         elif not re.fullmatch(r'\d{10,11}', data['phone_number']):
             errors.append('電話番号はハイフンなしの10桁〜11桁の数値で入力してください。')
 
-        # 4. 郵便番号
         if not data['post_code']:
             errors.append('郵便番号が入力されていません。')
         elif not re.fullmatch(r'\d{7}', data['post_code']):
             errors.append('郵便番号はハイフンなしの7桁の数値で入力してください。')
 
-        # 5. 住所
         if not data['address']:
             errors.append('住所が入力されていません。')
 
-        # 6. 会社名
         if not data['company_name']:
             errors.append('会社名が入力されていません。')
         else:
@@ -172,7 +165,6 @@ class AccountFormMixin(AccountBaseMixin):
             if c_qs.exists():
                 errors.append('この会社名は既に登録されています。')
 
-        # 7. 業種
         if not data['industry']:
             errors.append('業種が選択されていません。')
 
@@ -277,7 +269,6 @@ class LoginView(AccountBaseMixin, View):
             messages.error(request, '入力内容を確認してください。')
             return self.render_page(request, context)
 
-        # 管理者認証
         admin_obj = Admin.objects.filter(email=email).first()
         if admin_obj:
             is_valid_admin = (
@@ -294,7 +285,6 @@ class LoginView(AccountBaseMixin, View):
             messages.error(request, 'ユーザーIDまたはパスワードが正しくありません。')
             return self.render_page(request, context)
 
-        # 利用者認証
         user = User.objects.filter(email=email).exclude(user_status='none').first()
         if not user:
             messages.error(request, 'ユーザーIDまたはパスワードが正しくありません。')
