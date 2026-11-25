@@ -88,6 +88,7 @@ class Subsc(TimeStampModel, LinkIdMixin):
         verbose_name='サブスクID',
     )
     plan = models.ForeignKey(
+        SubscPlan,
         on_delete=models.PROTECT,
         db_column='plan_id',
         verbose_name='プランID',
