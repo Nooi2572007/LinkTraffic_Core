@@ -12,7 +12,7 @@ from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
@@ -25,6 +25,14 @@ MAX_LOGIN_ATTEMPTS = 6
 LOCK_CONTACT_PHONE = '0120-000-000'  # ロックモーダル表示用問い合わせ窓口
 PASSWORD_RESET_SALT = 'linktraffic-password-reset'
 PASSWORD_RESET_MAX_AGE = 1800  # トークン有効期限（30分）
+
+
+def render_account(request, template_name, context=None):
+    """
+    account/templates/account/〇〇.html と
+    account/templates/〇〇.html のどちらに配置されていても読み込む
+    """
+    return render(request, [f'account/{template_name}', template_name], context)
 
 
 def get_current_user(request):
@@ -44,12 +52,12 @@ def get_current_admin(request):
 
 
 def user_login_required(view_func):
-    """利用者ログイン必須デコレータ（管理者の代理操作も許可する場合は別途判定）"""
+    """利用者ログイン必須デコレータ（管理者の代理操作も許可）"""
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
         if not get_current_user(request) and not get_current_admin(request):
             messages.warning(request, 'ログインが必要です。')
-            return redirect('accounts:login')
+            return redirect('account:login')
         return view_func(request, *args, **kwargs)
     return _wrapped
 
@@ -60,7 +68,7 @@ def admin_login_required(view_func):
     def _wrapped(request, *args, **kwargs):
         if not get_current_admin(request):
             messages.warning(request, '管理者としてログインしてください。')
-            return redirect('accounts:login')
+            return redirect('account:login')
         return view_func(request, *args, **kwargs)
     return _wrapped
 
@@ -176,10 +184,10 @@ def _validate_account_data(data, is_update=False, exclude_user_id=None):
 def top_view(request):
     """トップ画面（未ログイン時の入口）"""
     if get_current_user(request):
-        return redirect('accounts:main')
+        return redirect('account:main')
     if get_current_admin(request):
-        return redirect('accounts:admin')
-    return render(request, 'accounts/top.html')
+        return redirect('account:admin')
+    return render_account(request, 'top.html')
 
 
 @user_login_required
@@ -187,9 +195,8 @@ def main_view(request):
     """メイン画面（ログイン後の利用者ホーム）"""
     user = get_current_user(request)
     if not user and get_current_admin(request):
-        return redirect('accounts:admin')
+        return redirect('account:admin')
 
-    # サブスク契約状況（Subscモデルが連携されている場合に参照）
     subsc = getattr(user, 'subsc', None)
     is_subscribed = bool(subsc and getattr(subsc, 'status', '') == 'active')
 
@@ -198,7 +205,7 @@ def main_view(request):
         'is_subscribed': is_subscribed,
         'subsc': subsc,
     }
-    return render(request, 'accounts/main.html', context)
+    return render_account(request, 'main.html', context)
 
 
 @user_login_required
@@ -206,7 +213,7 @@ def mypage_view(request):
     """マイページ画面"""
     user = get_current_user(request)
     if not user:
-        return redirect('accounts:admin')
+        return redirect('account:admin')
 
     subsc = getattr(user, 'subsc', None)
     context = {
@@ -214,7 +221,7 @@ def mypage_view(request):
         'subsc': subsc,
         'last_login': request.session.get('last_login_str', '初回ログイン'),
     }
-    return render(request, 'accounts/mypage.html', context)
+    return render_account(request, 'mypage.html', context)
 
 
 # ==========================================
@@ -240,7 +247,7 @@ def login_view(request):
         # 3a. 形式・必須チェック
         if not email or not password or len(email) > 255 or not (8 <= len(password) <= 64):
             messages.error(request, '入力内容を確認してください。')
-            return render(request, 'accounts/login.html', context)
+            return render_account(request, 'login.html', context)
 
         # 管理者アカウントの認証チェック
         admin_obj = Admin.objects.filter(email=email).first()
@@ -255,16 +262,16 @@ def login_view(request):
                 request.session['admin_id'] = admin_obj.pk
                 request.session['admin_name'] = getattr(admin_obj, 'name', email)
                 request.session['last_login_str'] = timezone.localtime().strftime('%Y/%m/%d %H:%M')
-                return redirect('accounts:admin')
+                return redirect('account:admin')
             else:
                 messages.error(request, 'ユーザーIDまたはパスワードが正しくありません。')
-                return render(request, 'accounts/login.html', context)
+                return render_account(request, 'login.html', context)
 
         # 利用者アカウントの検索（論理削除済み 'none' は除外）
         user = User.objects.filter(email=email).exclude(user_status='none').first()
         if not user:
             messages.error(request, 'ユーザーIDまたはパスワードが正しくありません。')
-            return render(request, 'accounts/login.html', context)
+            return render_account(request, 'login.html', context)
 
         # 既にロック状態（'look' または 'lock'）か判定
         if user.user_status in ('look', 'lock'):
@@ -272,7 +279,7 @@ def login_view(request):
             context['lock_message'] = (
                 f'このアカウントはロックされています。解除については下記の電話番号にお掛けください。\n{LOCK_CONTACT_PHONE}'
             )
-            return render(request, 'accounts/login.html', context)
+            return render_account(request, 'login.html', context)
 
         # パスワード照合（ハッシュ化済み・平文の両方に対応）
         is_valid = (
@@ -301,7 +308,7 @@ def login_view(request):
             request.session['user_id'] = user.pk
             request.session['company_name'] = user.company_name
             request.session['last_login_str'] = timezone.localtime().strftime('%Y/%m/%d %H:%M')
-            return redirect('accounts:main')
+            return redirect('account:main')
         else:
             # 認証失敗：連続失敗回数を +1
             current_fails += 1
@@ -321,23 +328,23 @@ def login_view(request):
                 context['lock_message'] = (
                     f'このアカウントはロックされています。解除については下記の電話番号にお掛けください。\n{LOCK_CONTACT_PHONE}'
                 )
-                return render(request, 'accounts/login.html', context)
+                return render_account(request, 'login.html', context)
             else:
                 if hasattr(user, 'failed_login_count'):
                     user.save()
                 else:
                     request.session[fail_session_key] = current_fails
                 messages.error(request, 'ユーザーIDまたはパスワードが正しくありません。')
-                return render(request, 'accounts/login.html', context)
+                return render_account(request, 'login.html', context)
 
-    return render(request, 'accounts/login.html', context)
+    return render_account(request, 'login.html', context)
 
 
 def logout_view(request):
     """ログアウト処理"""
     request.session.flush()
     messages.info(request, 'ログアウトしました。')
-    return redirect('accounts:top')
+    return redirect('account:top')
 
 
 # ==========================================
@@ -354,14 +361,13 @@ def user_register_view(request):
         if errors:
             for err in errors:
                 messages.error(request, err)
-            return render(request, 'accounts/user_register.html', {'form_data': data})
+            return render_account(request, 'user_register.html', {'form_data': data})
 
         request.session[session_key] = data
-        return redirect('accounts:user_register_confirm')
+        return redirect('account:user_register_confirm')
 
-    # 「修正する」ボタン等で戻った場合はセッションの入力値を初期表示
     form_data = request.session.get(session_key, {})
-    return render(request, 'accounts/user_register.html', {'form_data': form_data})
+    return render_account(request, 'user_register.html', {'form_data': form_data})
 
 
 def user_register_confirm_view(request):
@@ -369,19 +375,19 @@ def user_register_confirm_view(request):
     session_key = 'register_form_data'
     data = request.session.get(session_key)
     if not data:
-        return redirect('accounts:user_register')
+        return redirect('account:user_register')
 
     if request.method == 'POST':
         # 「修正する」ボタン押下時
         if 'return_btn' in request.POST:
-            return redirect('accounts:user_register')
+            return redirect('account:user_register')
 
-        # 「登録する」ボタン押下時（二重送信防止のため再検証）
+        # 「登録する」ボタン押下時
         errors = _validate_account_data(data, is_update=False)
         if errors:
             for err in errors:
                 messages.error(request, err)
-            return redirect('accounts:user_register')
+            return redirect('account:user_register')
 
         user = User.objects.create(
             email=data['email'],
@@ -394,24 +400,23 @@ def user_register_confirm_view(request):
             user_status='active',
         )
 
-        # セッションの仮入力データを破棄し、登録したユーザーでログイン状態にする
         del request.session[session_key]
         request.session['user_id'] = user.pk
         request.session['company_name'] = user.company_name
         request.session['last_login_str'] = timezone.localtime().strftime('%Y/%m/%d %H:%M')
-        return redirect('accounts:user_register_done')
+        return redirect('account:user_register_done')
 
     context = {
         'form_data': data,
         'masked_password': '●' * len(data.get('password', '')),
     }
-    return render(request, 'accounts/user_register_confirm.html', context)
+    return render_account(request, 'user_register_confirm.html', context)
 
 
 def user_register_done_view(request):
     """アカウント新規登録完了画面"""
     user = get_current_user(request)
-    return render(request, 'accounts/user_register_done.html', {'user': user})
+    return render_account(request, 'user_register_done.html', {'user': user})
 
 
 # ==========================================
@@ -440,7 +445,7 @@ def user_update_view(request):
     target_user, is_admin_mode = _resolve_target_user(request)
     if not target_user:
         messages.error(request, '対象のアカウント情報が見つかりません。')
-        return redirect('accounts:admin_user_list' if get_current_admin(request) else 'accounts:login')
+        return redirect('account:admin_user_list' if get_current_admin(request) else 'account:login')
 
     session_key = f'update_form_data_{target_user.pk}'
 
@@ -451,16 +456,15 @@ def user_update_view(request):
         if errors:
             for err in errors:
                 messages.error(request, err)
-            return render(request, 'accounts/user_update.html', {
+            return render_account(request, 'user_update.html', {
                 'user': target_user,
                 'form_data': data,
                 'is_admin_mode': is_admin_mode,
             })
 
         request.session[session_key] = data
-        return redirect('accounts:user_update_confirm')
+        return redirect('account:user_update_confirm')
 
-    # 確認画面からの「修正する」戻り時はセッション値、初回表示時はDBの現在値を初期表示
     saved_data = request.session.get(session_key)
     if saved_data:
         form_data = saved_data
@@ -480,7 +484,7 @@ def user_update_view(request):
             'industry': target_user.industry,
         }
 
-    return render(request, 'accounts/user_update.html', {
+    return render_account(request, 'user_update.html', {
         'user': target_user,
         'form_data': form_data,
         'is_admin_mode': is_admin_mode,
@@ -492,24 +496,22 @@ def user_update_confirm_view(request):
     """アカウント変更確認画面"""
     target_user, is_admin_mode = _resolve_target_user(request)
     if not target_user:
-        return redirect('accounts:login')
+        return redirect('account:login')
 
     session_key = f'update_form_data_{target_user.pk}'
     data = request.session.get(session_key)
     if not data:
-        return redirect('accounts:user_update')
+        return redirect('account:user_update')
 
     if request.method == 'POST':
-        # 「修正する」ボタン押下時
         if 'return_btn' in request.POST:
-            return redirect('accounts:user_update')
+            return redirect('account:user_update')
 
-        # 「確定する」ボタン押下時
         errors = _validate_account_data(data, is_update=True, exclude_user_id=target_user.pk)
         if errors:
             for err in errors:
                 messages.error(request, err)
-            return redirect('accounts:user_update')
+            return redirect('account:user_update')
 
         target_user.email = data['email']
         if data['password']:
@@ -524,7 +526,7 @@ def user_update_confirm_view(request):
         del request.session[session_key]
         if not is_admin_mode:
             request.session['company_name'] = target_user.company_name
-        return redirect('accounts:user_update_done')
+        return redirect('account:user_update_done')
 
     context = {
         'user': target_user,
@@ -532,14 +534,14 @@ def user_update_confirm_view(request):
         'password_display': ('●' * len(data['password'])) if data['password'] else '（変更なし）',
         'is_admin_mode': is_admin_mode,
     }
-    return render(request, 'accounts/user_update_confirm.html', context)
+    return render_account(request, 'user_update_confirm.html', context)
 
 
 @user_login_required
 def user_update_done_view(request):
     """アカウント変更完了画面"""
     target_user, is_admin_mode = _resolve_target_user(request)
-    return render(request, 'accounts/user_update_done.html', {
+    return render_account(request, 'user_update_done.html', {
         'user': target_user,
         'is_admin_mode': is_admin_mode,
     })
@@ -558,16 +560,14 @@ def user_archive_view(request):
     target_user, is_admin_mode = _resolve_target_user(request)
     if not target_user:
         messages.error(request, '対象のアカウント情報が見つかりません。')
-        return redirect('accounts:admin_user_list' if get_current_admin(request) else 'accounts:login')
+        return redirect('account:admin_user_list' if get_current_admin(request) else 'account:login')
 
     if request.method == 'POST':
-        # 「キャンセル」ボタン押下時（代替フロー3a）
         if 'cancel_btn' in request.POST:
             if is_admin_mode:
-                return redirect('accounts:admin_user_details', user_id=target_user.pk)
-            return redirect('accounts:mypage')
+                return redirect('account:admin_user_details', user_id=target_user.pk)
+            return redirect('account:mypage')
 
-        # 1. 月額会員のサブスクリプション更新を停止（関連モデルが存在する場合）
         subsc = getattr(target_user, 'subsc', None)
         if subsc:
             if hasattr(subsc, 'status'):
@@ -576,20 +576,18 @@ def user_archive_view(request):
                 subsc.auto_renew = False
             subsc.save()
 
-        # 2. アカウントの論理削除（完全に物理削除する場合は target_user.delete() に変更可能）
         target_user.user_status = 'none'
         target_user.save()
 
         if is_admin_mode:
             request.session.pop('admin_target_user_id', None)
             messages.success(request, f'会員ID: {target_user.pk}（{target_user.company_name}）のアカウントを削除しました。')
-            return redirect('accounts:admin_user_list')
+            return redirect('account:admin_user_list')
         else:
-            # 利用者本人の場合はログアウトして完了画面へ
             request.session.flush()
-            return redirect('accounts:user_archive_done')
+            return redirect('account:user_archive_done')
 
-    return render(request, 'accounts/user_archive.html', {
+    return render_account(request, 'user_archive.html', {
         'user': target_user,
         'is_admin_mode': is_admin_mode,
     })
@@ -597,7 +595,7 @@ def user_archive_view(request):
 
 def user_archive_done_view(request):
     """アカウント削除完了画面"""
-    return render(request, 'accounts/user_archive_done.html')
+    return render_account(request, 'user_archive_done.html')
 
 
 # ==========================================
@@ -606,18 +604,16 @@ def user_archive_done_view(request):
 def password_reset_link_view(request):
     """パスワード再設定リンク送信画面"""
     if request.method == 'POST':
-        # 画面設計書上は name="submit" または name="email" の可能性があるため両対応
         email = (request.POST.get('email') or request.POST.get('submit') or '').strip()
         if not email:
             messages.error(request, 'メールアドレスを入力してください。')
-            return render(request, 'accounts/password_reset_link.html')
+            return render_account(request, 'password_reset_link.html')
 
         user = User.objects.filter(email=email).exclude(user_status='none').first()
         if user:
-            # 有効期限付き署名トークンを生成（追加テーブル不要）
             token = signing.dumps({'user_id': user.pk, 'email': user.email}, salt=PASSWORD_RESET_SALT)
             reset_url = request.build_absolute_uri(
-                reverse('accounts:password_reset', kwargs={'token': token})
+                reverse('account:password_reset', kwargs={'token': token})
             )
 
             send_mail(
@@ -632,11 +628,10 @@ def password_reset_link_view(request):
                 fail_silently=True,
             )
 
-        # 代替フロー3a：未登録アドレスの場合でもセキュリティ上同じ送信完了メッセージを表示
         messages.success(request, 'ご入力いただいたメールアドレス宛にパスワード再設定用URLを送信しました。')
-        return render(request, 'accounts/password_reset_link.html', {'sent': True})
+        return render_account(request, 'password_reset_link.html', {'sent': True})
 
-    return render(request, 'accounts/password_reset_link.html')
+    return render_account(request, 'password_reset_link.html')
 
 
 def password_reset_view(request, token):
@@ -644,14 +639,13 @@ def password_reset_view(request, token):
     try:
         payload = signing.loads(token, salt=PASSWORD_RESET_SALT, max_age=PASSWORD_RESET_MAX_AGE)
     except (signing.BadSignature, signing.SignatureExpired):
-        # 代替フロー4a：URLが無効または有効期限切れ
         messages.error(request, '再設定用URLが無効か、有効期限が切れています。もう一度お手続きください。')
-        return redirect('accounts:password_reset_link')
+        return redirect('account:password_reset_link')
 
     user = User.objects.filter(pk=payload.get('user_id'), email=payload.get('email')).exclude(user_status='none').first()
     if not user:
         messages.error(request, '対象のアカウントが見つかりません。')
-        return redirect('accounts:password_reset_link')
+        return redirect('account:password_reset_link')
 
     if request.method == 'POST':
         new_password = request.POST.get('new_password') or ''
@@ -659,27 +653,26 @@ def password_reset_view(request, token):
 
         if not (8 <= len(new_password) <= 64):
             messages.error(request, '新しいパスワードは8文字以上64文字以内で入力してください。')
-            return render(request, 'accounts/password_reset.html', {'token': token})
+            return render_account(request, 'password_reset.html', {'token': token})
 
         if not re.search(r'[A-Za-z]', new_password) or not re.search(r'\d', new_password):
             messages.error(request, '新しいパスワードは英字と数字の両方を含めてください。')
-            return render(request, 'accounts/password_reset.html', {'token': token})
+            return render_account(request, 'password_reset.html', {'token': token})
 
         if new_password != new_password_confirm:
-            # 代替フロー7a：確認用パスワード不一致
             messages.error(request, '新しいパスワードと確認用パスワードが一致しません。')
-            return render(request, 'accounts/password_reset.html', {'token': token})
+            return render_account(request, 'password_reset.html', {'token': token})
 
         user.password = make_password(new_password)
         user.save()
-        return redirect('accounts:password_reset_done')
+        return redirect('account:password_reset_done')
 
-    return render(request, 'accounts/password_reset.html', {'token': token})
+    return render_account(request, 'password_reset.html', {'token': token})
 
 
 def password_reset_done_view(request):
     """パスワード再設定完了画面"""
-    return render(request, 'accounts/password_reset_done.html')
+    return render_account(request, 'password_reset_done.html')
 
 
 # ==========================================
@@ -717,69 +710,10 @@ def admin_dashboard_view(request):
         'active_user_count': active_user_count,
         'last_login': request.session.get('last_login_str', ''),
     }
-    return render(request, 'accounts/admin.html', context)
+    return render_account(request, 'admin.html', context)
 
 
 @admin_login_required
 def admin_user_list_view(request):
     """アカウント一覧画面（検索・選択対応）"""
-    admin = get_current_admin(request)
-    keyword = (request.GET.get('q') or request.GET.get('keyword') or '').strip()
-
-    users = User.objects.exclude(user_status='none').order_by('pk')
-    if keyword:
-        query = Q(company_name__icontains=keyword) | Q(email__icontains=keyword)
-        if keyword.isdigit():
-            query |= Q(pk=int(keyword))
-        users = users.filter(query)
-
-    # 一覧画面からラジオボタン等で会員を選択して詳細へ遷移する場合
-    if request.method == 'POST':
-        selected_id = request.POST.get('account_id')
-        if not selected_id:
-            messages.error(request, '対象のアカウントを選択してください。')
-        else:
-            return redirect('accounts:admin_user_details', user_id=int(selected_id))
-
-    context = {
-        'admin': admin,
-        'users': users,
-        'keyword': keyword,
-    }
-    return render(request, 'accounts/admin_user_list.html', context)
-
-
-@admin_login_required
-def admin_user_details_view(request, user_id):
-    """アカウント詳細画面 & アカウントロック解除処理"""
-    admin = get_current_admin(request)
-    target_user = User.objects.filter(pk=user_id).exclude(user_status='none').first()
-
-    # 代替フロー2a：対象会員が存在しない場合
-    if not target_user:
-        messages.error(request, '対象のアカウント情報が見つかりません。')
-        return redirect('accounts:admin_user_list')
-
-    # 管理者がアカウント変更・削除へ遷移する際にセッションへ対象IDを保持
-    request.session['admin_target_user_id'] = target_user.pk
-
-    if request.method == 'POST':
-        # 「ロック解除」ボタン押下時（ユースケース「アカウントロック」解除フロー）
-        if 'unlock_user' in request.POST:
-            target_user.user_status = 'active'
-            if hasattr(target_user, 'failed_login_count'):
-                target_user.failed_login_count = 0
-            if hasattr(target_user, 'locked_at'):
-                target_user.locked_at = None
-            target_user.save()
-            messages.success(request, f'{target_user.company_name} のアカウントロックを解除しました。')
-            return redirect('accounts:admin_user_details', user_id=target_user.pk)
-
-    subsc = getattr(target_user, 'subsc', None)
-    context = {
-        'admin': admin,
-        'target_user': target_user,
-        'subsc': subsc,
-        'is_locked': target_user.user_status in ('look', 'lock'),
-    }
-    return render(request, 'accounts/admin_user_details.html', context)
+    admin = get_
