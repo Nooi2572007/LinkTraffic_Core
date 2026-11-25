@@ -1,4 +1,4 @@
-import uuid
+import uuid, hashlib, secrets
 from django.db import models
 
 
@@ -25,6 +25,22 @@ class LinkIdMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+def hash_with_salt(raw_value: str, salt: str | None = None) -> str:
+    if raw_value is None or str(raw_value) == '':
+        raise ValueError('ハッシュ化対象の値が空です。')
+    if salt is None:
+        salt = secrets.token_hex(16)
+    digest = hashlib.sha256(f'{salt}:{raw_value}'.encode('utf-8')).hexdigest()
+    return f'{salt}${digest}'
+
+def verify_salted_hash(raw_value: str, stored_value: str) -> bool:
+    if not stored_value or '$' not in stored_value:
+        return False
+    salt, expected_digest = stored_value.split('$', 1)
+    actual_digest = hashlib.sha256(f'{salt}:{raw_value}'.encode('utf-8')).hexdigest()
+    return secrets.compare_digest(actual_digest, expected_digest)
 
 
 class SubscPlan(TimeStampModel):
@@ -62,12 +78,7 @@ class SubscPlan(TimeStampModel):
         blank=True,
         verbose_name='更新者ID',
     )
-    updated_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name='変更日時',
-    )
-
+    
     class Meta(TimeStampModel.Meta):
         db_table = 'subsc_plan'
         verbose_name = 'サブスクプラン'
@@ -124,6 +135,7 @@ class Credit(TimeStampModel, LinkIdMixin):
         MASTERCARD = 'mastercard', 'Mastercard'
         JCB = 'jcb', 'JCB'
         AMEX = 'amex', 'American Express'
+        NONE = 'none', 'NONE'
     
     credit_pay_id = models.UUIDField(
         primary_key=True,
@@ -139,7 +151,7 @@ class Credit(TimeStampModel, LinkIdMixin):
     card_brand = models.CharField(
         max_length=20,
         choices=CardBrand.choices,
-        default=CardBrand.OTHER,
+        default=CardBrand.NONE,
         verbose_name='カードブランド',
     )
     last_card_number = models.CharField(
@@ -181,22 +193,21 @@ class Bank(TimeStampModel, LinkIdMixin):
         default=uuid.uuid4,
         editable=False,
         verbose_name='銀行振替ID',
-        help_text='UUID',
     )
     bank_code = models.CharField(
-        max_length=4,
+        max_length=128,
         verbose_name='金融機関コード',
     )
     bank_name = models.CharField(
-        max_length=50,
+        max_length=128,
         verbose_name='金融機関名',
     )
     bank_branch_code = models.CharField(
-        max_length=3,
+        max_length=128,
         verbose_name='支店コード',
     )
     bank_branch_name = models.CharField(
-        max_length=50,
+        max_length=128,
         verbose_name='支店名',
     )
     bank_account_type = models.SmallIntegerField(
@@ -210,7 +221,7 @@ class Bank(TimeStampModel, LinkIdMixin):
         verbose_name='口座名義の区分',
     )
     bank_account_number = models.CharField(
-        max_length=20,
+        max_length=128,
         verbose_name='口座番号',
     )
     bank_account_holder_name = models.CharField(
@@ -227,6 +238,21 @@ class Bank(TimeStampModel, LinkIdMixin):
         db_table = 'bank'
         verbose_name = '銀行振替管理'
         verbose_name_plural = '銀行振替管理'
+    
+    def set_bank_info(
+        self,
+        *,
+        bank_code: str,
+        bank_name: str,
+        bank_branch_code: str,
+        bank_branch_name: str,
+        bank_account_number: str,
+        ) -> None:
+        self.bank_code = hash_with_salt(bank_code)
+        self.bank_name = hash_with_salt(bank_name)
+        self.bank_branch_code = hash_with_salt(bank_branch_code)
+        self.bank_branch_name = hash_with_salt(bank_branch_name)
+        self.bank_account_number = hash_with_salt(bank_account_number)
 
     def __str__(self):
         return str(self.bankpay_id)
