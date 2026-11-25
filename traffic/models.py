@@ -29,3 +29,35 @@ class Prefecture(models.Model):
 
     def __str__(self):
         return self.prefecture_name
+    class Area(models.Model):
+    """エリア情報テーブル"""
+
+    # エリアコード：INTEGER / 桁数6 / PK / NN
+    # 備考：「都道府県コード(2桁) + 0 + 連番(3桁)」 例）13 + 0 + 001 → 130001 ※2桁+0+3桁で6桁
+    area_code = models.IntegerField(
+        verbose_name="エリアコード",
+        primary_key=True,
+        validators=[MinValueValidator(1), MaxValueValidator(999999)],  # 6桁
+    )
+    # エリア名：VARCHAR / 桁数255 / NN
+    area_name = models.CharField(
+        verbose_name="エリア名",
+        max_length=255,
+    )
+    # 都道府県コード：INTEGER / 桁数2 / FK / NN（カラム名は prefecture_code）
+    prefecture = models.ForeignKey(
+        Prefecture,
+        verbose_name="都道府県コード",
+        db_column="prefecture_code",
+        on_delete=models.PROTECT,
+        related_name="areas",
+    )
+
+    class Meta:
+        db_table = "areas"
+        verbose_name = "エリア情報"
+        verbose_name_plural = "エリア情報"
+        ordering = ["area_code"]
+
+    def __str__(self):
+        return self.area_name
