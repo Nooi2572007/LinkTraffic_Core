@@ -71,9 +71,8 @@ class User(TimeSoftDeleteModel, PasswordMixin):
         primary_key=True,
         verbose_name='利用者ID',
     )
-    link_id = models.CharField(
-        max_length=36,
-        default=lambda: str(uuid.uuid4()),
+    link_id = models.UUIDField(
+        default=uuid.uuid4,
         editable=False,
         unique=True,
         verbose_name='接続ID',
