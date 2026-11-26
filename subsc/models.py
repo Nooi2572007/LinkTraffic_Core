@@ -68,12 +68,20 @@ class SubscPlan(TimeStampModel):
         default=True,
         verbose_name='プランステータス',
     )
-    created_by = models.CharField(
-        max_length=9,
+    created_by = models.ForeignKey(
+        'account.Admin',
+        to_field='admin_id',
+        db_column='created_by',
+        on_delete=models.PROTECT,
+        related_name='created_subsc_plans',
         verbose_name='作成者ID',
     )
-    updated_by = models.CharField(
-        max_length=9,
+    updated_by = models.ForeignKey(
+        'account.Admin',
+        to_field='admin_id',
+        db_column='updated_by',
+        on_delete=models.PROTECT,
+        related_name='updated_subsc_plans',
         null=True,
         blank=True,
         verbose_name='更新者ID',
@@ -145,8 +153,7 @@ class Credit(TimeStampModel, LinkIdMixin):
     )
     card_holder_name = models.CharField(
         max_length=100,
-        null=True,
-        blank=True,
+        verbose_name="カード名義人"
     )
     card_brand = models.CharField(
         max_length=20,
@@ -256,3 +263,87 @@ class Bank(TimeStampModel, LinkIdMixin):
 
     def __str__(self):
         return str(self.bankpay_id)
+
+class Payment(TimeStampModel):
+    class PaymentMethod(models.TextChoices):
+        CREDIT = "credit", "クレジットカード"
+        BANK = "bank", "銀行振込"
+        ERROR = "error", "エラー"
+
+    class PaymentStatus(models.TextChoices):
+        PAID = "paid", "支払い済み"
+        UNPAID = "unpaid", "未払い"
+        REFUNDED = "refunded", "返金済み"
+        ERROR = "error", "エラー"
+
+    payment_id = models.BigAutoField(
+        primary_key=True,
+        verbose_name="決済ID",
+    )
+    subsc = models.ForeignKey(
+        Subsc,
+        on_delete=models.PROTECT,
+        db_column="subsc_id",
+        related_name="payments",
+        verbose_name="サブスクID",
+    )
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PaymentMethod.choices,
+        verbose_name="決済手段",
+    )
+    credit_pay = models.ForeignKey(
+        Credit,
+        to_field="credit_pay_id",
+        on_delete=models.PROTECT,
+        db_column="credit_pay_id",
+        related_name="payments",
+        null=True,
+        blank=True,
+        verbose_name="クレジットID",
+    )
+    bankpay = models.ForeignKey(
+        Bank,
+        to_field="bankpay_id",
+        on_delete=models.PROTECT,
+        db_column="bankpay_id",
+        related_name="payments",
+        null=True,
+        blank=True,
+        verbose_name="銀行振替ID",
+    )
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.ERROR,
+        db_index=True,
+        verbose_name="決済ステータス",
+    )
+    amount = models.IntegerField(
+        verbose_name="金額",
+    )
+    gateway_payment_id = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        verbose_name="外部決済トランザクションID",
+    )
+    error_message = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="外部決済リターンメッセージ",
+    )
+    paid_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="決済完了日時",
+    )
+
+    class Meta(TimeStampModel.Meta):
+        db_table = "payment"
+        verbose_name = "決済管理"
+        verbose_name_plural = "決済管理"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.payment_id} ({self.get_payment_status_display()})"
