@@ -1,0 +1,61 @@
+{% extends "not_logged_base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* 1. 左上の「LinkTraffic」ロゴをもっと大きくする */
+    .head {
+        min-height: 92px;               /* ロゴを大きくした分、青い帯の高さも広げる */
+    }
+    .title, .title * {
+        font-size: 56px !important;     /* ← さらに大きくしたい場合は 64px などに変更 */
+    }
+    .title {
+        margin: 8px 0 0 24px;
+    }
+
+    /* 2. 右上の「PASMO」の位置をヘッダーの高さに合わせる */
+    .navi_item, .navi_item * {
+        font-size: 20px !important;
+    }
+    .navi_item {
+        margin: 31px 0;
+    }
+    .navi_li li:last-child {
+        padding-right: 28px;
+    }
+
+    /* 3. 「ようこそ」を横は真ん中、縦は上寄りに配置する */
+    .main_contents {
+        text-align: center;             /* 左右の真ん中に揃える */
+        margin: 60px 4% 0 4%;           /* ← 上からの距離（もっと上にしたい場合は 30px、少し下げたい場合は 100px に変更） */
+    }
+    .main_contents h2 {
+        font-size: 40px;                /* 「ようこそ」の文字サイズ */
+        margin: 0;
+    }
+
+    /* 4. フッターの調整 */
+    .ft, .ft * {
+        font-size: 14px !important;
+    }
+    .ft {
+        padding: 4px 0;
+    }
+</style>
+{% endblock %}
+
+{% block title %}HOME{% endblock %}
+
+{% block contents %}
+<div class="main_contents">
+    {% if user.is_authenticated %}
+        <h2>KEPEMASシステムへようこそ</h2>
+    {% else %}
+        <h2>LinkTrafficシステムへようこそ</h2>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}
