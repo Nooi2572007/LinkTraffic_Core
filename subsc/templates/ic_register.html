@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}IC関連情報登録 | LinkTraffic{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="page-title">IC関連情報登録</h2>
+    <p style="margin-bottom: 1.5rem; color: #64748b;">乗降時に利用する交通系ICカードやマイナンバーカードの識別情報を紐付けます。</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>ICカード種別<span class="required-badge">必須</span></label>
+            <select name="ic_type" class="form-control" required>
+                <option value="transit_ic">交通系ICカード（Suica / PASMO / SUGOCA 等）</option>
+                <option value="mynumber">マイナンバーカード</option>
+                <option value="other_felica">その他FeliCaカード</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>カード識別番号（IDm）<span class="required-badge">必須</span></label>
+            <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="ic_idm" name="ic_idm" class="form-control" placeholder="16桁の英数字（例: 0101011234567890）" maxlength="32" required>
+                <button type="button" id="btn-scan-ic" class="btn btn-outline" style="white-space: nowrap;">カード読み取り</button>
+            </div>
+            <small id="scan-status" style="color: #64748b; display: block; margin-top: 4px;">※ICカードリーダー接続時は「カード読み取り」から自動入力できます。</small>
+        </div>
+
+        <div class="form-group">
+            <label>登録名称（メモ）<span class="required-badge">必須</span></label>
+            <input type="text" name="card_alias" class="form-control" placeholder="例：通勤用Suica" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">IC情報を登録する</button>
+    </form>
+</div>
+{% endblock %}

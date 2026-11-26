@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LinkTraffic{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="header">
+        <h1>LinkTraffic</h1>
+        <nav class="nav-links">
+            <a href="{% url 'subsc_register' %}">サブスク登録</a>
+            <a href="{% url 'subsc_update' %}">サブスク変更</a>
+            <a href="{% url 'ic_register' %}">IC情報登録</a>
+            <a href="{% url 'user_list' %}">利用者一覧(管理)</a>
+            <a href="{% url 'movement_list' %}">移動情報一覧(管理)</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="card" style="padding: 1rem; border-left: 4px solid #2563eb;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

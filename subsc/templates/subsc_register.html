@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}サブスクリプション登録 | LinkTraffic{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="page-title">サブスクリプション登録</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>1. プランを選択してください<span class="required-badge">必須</span></label>
+            <div class="plan-grid">
+                {% for plan in plans %}
+                <label class="plan-card {% if forloop.first %}selected{% endif %}">
+                    <input type="radio" name="plan_id" value="{{ plan.plan_id }}" {% if forloop.first %}checked{% endif %} style="display:none;">
+                    <h3>{{ plan.plan_name }}</h3>
+                    <div class="plan-price">¥{{ plan.plan_price }} <small>/ {{ plan.plan_interval }}ヶ月</small></div>
+                    <p style="font-size: 0.85rem; color: #64748b;">{{ plan.plan_explanation }}</p>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>2. お支払い方法を選択してください<span class="required-badge">必須</span></label>
+            <div style="display: flex; gap: 2rem; margin-top: 0.5rem;">
+                <label><input type="radio" name="payment_method" value="credit" checked> クレジットカード</label>
+                <label><input type="radio" name="payment_method" value="bank"> 口座振替（銀行）</label>
+            </div>
+        </div>
+
+        <!-- クレジットカード入力フォーム -->
+        <div id="credit-form-section" class="card" style="background: #f8fafc;">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">クレジットカード情報</h3>
+            <div class="form-group">
+                <label>カード番号<span class="required-badge">必須</span></label>
+                <input type="text" name="card_number" class="form-control" placeholder="1234567812345678" maxlength="16" data-required="true">
+            </div>
+            <div class="form-group">
+                <label>カード名義人（ローマ字）</label>
+                <input type="text" name="card_holder_name" class="form-control" placeholder="TARO YAMADA">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>有効期限（月）<span class="required-badge">必須</span></label>
+                    <input type="number" name="exp_month" class="form-control" min="1" max="12" placeholder="08" data-required="true">
+                </div>
+                <div class="form-group">
+                    <label>有効期限（年）<span class="required-badge">必須</span></label>
+                    <input type="number" name="exp_year" class="form-control" min="2026" max="2040" placeholder="2029" data-required="true">
+                </div>
+            </div>
+        </div>
+
+        <!-- 銀行振替入力フォーム -->
+        <div id="bank-form-section" class="card hidden" style="background: #f8fafc;">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">口座振替情報</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>金融機関コード<span class="required-badge">必須</span></label>
+                    <input type="text" name="bank_code" class="form-control" maxlength="4" placeholder="0001" data-required="true">
+                </div>
+                <div class="form-group">
+                    <label>金融機関名<span class="required-badge">必須</span></label>
+                    <input type="text" name="bank_name" class="form-control" placeholder="〇〇銀行" data-required="true">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>支店コード<span class="required-badge">必須</span></label>
+                    <input type="text" name="bank_branch_code" class="form-control" maxlength="3" placeholder="001" data-required="true">
+                </div>
+                <div class="form-group">
+                    <label>支店名<span class="required-badge">必須</span></label>
+                    <input type="text" name="bank_branch_name" class="form-control" placeholder="本店" data-required="true">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>口座種別<span class="required-badge">必須</span></label>
+                    <select name="bank_account_type" class="form-control">
+                        <option value="1">1: 普通</option>
+                        <option value="2">2: 当座</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>口座名義区分<span class="required-badge">必須</span></label>
+                    <select name="bank_account_name_type" class="form-control">
+                        <option value="1">1: 個人</option>
+                        <option value="2">2: 法人</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>口座番号<span class="required-badge">必須</span></label>
+                <input type="text" name="bank_account_number" class="form-control" maxlength="20" placeholder="1234567" data-required="true">
+            </div>
+            <div class="form-group">
+                <label>口座名義人（全角カナ）<span class="required-badge">必須</span></label>
+                <input type="text" name="bank_account_holder_name" class="form-control" placeholder="ヤマダ タロウ" data-required="true">
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">この内容でサブスクを登録する</button>
+    </form>
+</div>
+{% endblock %}

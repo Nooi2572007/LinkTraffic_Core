@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}サブスクリプション変更 | LinkTraffic{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="page-title">サブスクリプション変更・確認</h2>
+
+    {% if current_subsc %}
+    <div style="background: #eff6ff; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+        <p><strong>現在の契約プラン:</strong> {{ current_subsc.plan.plan_name }}（¥{{ current_subsc.plan.plan_price }} / {{ current_subsc.plan.plan_interval }}ヶ月）</p>
+        <p><strong>次回更新日:</strong> {{ current_subsc.next_subsc_date|date:"Y年m月d日" }}</p>
+        <p><strong>ステータス:</strong> <span class="badge badge-active">{{ current_subsc.get_subsc_status_display }}</span></p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>変更後のプランを選択</label>
+            <div class="plan-grid">
+                {% for plan in plans %}
+                <label class="plan-card {% if plan.plan_id == current_subsc.plan.plan_id %}selected{% endif %}">
+                    <input type="radio" name="plan_id" value="{{ plan.plan_id }}" {% if plan.plan_id == current_subsc.plan.plan_id %}checked{% endif %} style="display:none;">
+                    <h3>{{ plan.plan_name }}</h3>
+                    <div class="plan-price">¥{{ plan.plan_price }} <small>/ {{ plan.plan_interval }}ヶ月</small></div>
+                    <p style="font-size: 0.85rem; color: #64748b;">{{ plan.plan_explanation }}</p>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">プラン変更を確定する</button>
+    </form>
+
+    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #cbd5e1;">
+
+    <div>
+        <h3 style="font-size: 1.1rem; color: #dc2626; margin-bottom: 0.5rem;">サブスクリプションの解約</h3>
+        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 1rem;">解約手続きを行うと、次回更新日以降の自動課金が停止されます。</p>
+        <form id="subsc-cancel-form" method="post" action="{% url 'subsc_cancel' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">サブスクを解約する</button>
+        </form>
+    </div>
+    {% else %}
+    <p>現在有効なサブスクリプション契約はありません。</p>
+    <a href="{% url 'subsc_register' %}" class="btn btn-primary" style="margin-top: 1rem;">新規登録はこちら</a>
+    {% endif %}
+</div>
+{% endblock %}

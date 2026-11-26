@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}移動情報一覧 | LinkTraffic 管理画面{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="page-title">移動情報一覧</h2>
+
+    <form method="get" class="search-box">
+        <div class="form-row">
+            <div class="form-group">
+                <label>接続ID / ICカードIDm</label>
+                <input type="text" name="link_id" value="{{ link_id }}" class="form-control" placeholder="IDを入力">
+            </div>
+            <div class="form-group">
+                <label>利用日（開始）</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>利用日（終了）</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>交通手段</label>
+                <select name="transport_type" class="form-control">
+                    <option value="">すべて</option>
+                    <option value="train" {% if transport_type == 'train' %}selected{% endif %}>鉄道</option>
+                    <option value="bus" {% if transport_type == 'bus' %}selected{% endif %}>バス</option>
+                </select>
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <a href="{% url 'movement_list' %}" class="btn btn-outline">クリア</a>
+            <button type="submit" class="btn btn-primary">検索する</button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>履歴ID</th>
+                    <th>利用者 / 接続ID</th>
+                    <th>交通手段</th>
+                    <th>乗車日時</th>
+                    <th>乗車場所</th>
+                    <th>降車日時</th>
+                    <th>降車場所</th>
+                    <th>運賃</th>
+                    <th>使用IC (IDm)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in movements %}
+                <tr>
+                    <td>{{ m.id }}</td>
+                    <td>
+                        <strong>{{ m.user_name }}</strong><br>
+                        <small style="color: #64748b;">{{ m.link_id }}</small>
+                    </td>
+                    <td>{{ m.transport }}</td>
+                    <td>{{ m.ride_datetime }}</td>
+                    <td>{{ m.departure }}</td>
+                    <td>{{ m.getoff_datetime }}</td>
+                    <td>{{ m.arrival }}</td>
+                    <td>¥{{ m.fare }}</td>
+                    <td><code>{{ m.ic_idm }}</code></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 2rem;">移動履歴データが見つかりませんでした。</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
